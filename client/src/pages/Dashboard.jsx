@@ -170,6 +170,13 @@ function Dashboard() {
     e.preventDefault();
     if (!formData.amount || !formData.category || !formData.date) return;
 
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert("Please sign up or login to save your expenses and access AI forecasting!");
+      navigate('/signup');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5000/api/expenses', {
@@ -219,51 +226,51 @@ function Dashboard() {
   };
   const handleDownloadReport = () => {
     localStorage.setItem('transactions', JSON.stringify(transactions));
-  try {
-    // 1. Initialize the PDF
-    const doc = new jsPDF();
+    try {
+      // 1. Initialize the PDF
+      const doc = new jsPDF();
 
-    // 2. Check if transactions exist to avoid crashing
-    if (!transactions || transactions.length === 0) {
-      alert("No data available to generate a report.");
-      return;
+      // 2. Check if transactions exist to avoid crashing
+      if (!transactions || transactions.length === 0) {
+        alert("No data available to generate a report.");
+        return;
+      }
+
+      // 3. Add a Title
+      doc.setFontSize(18);
+      doc.text("SmartExpense - Transaction Report", 14, 22);
+
+      // 4. Add Generation Date
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Report generated on: ${new Date().toLocaleString()}`, 14, 30);
+
+      // 5. Prepare Table Data
+      const tableColumn = ["Date", "Category", "Amount"];
+      const tableRows = transactions.map(t => [
+        t.date || "N/A",
+        t.category || "General",
+        `Rs. ${Math.abs(t.amount || 0).toFixed(2)}`
+      ]);
+
+      // 6. Use autoTable as a direct function (This solves the "not a function" error)
+      autoTable(doc, {
+        startY: 40,
+        head: [tableColumn],
+        body: tableRows,
+        theme: 'grid',
+        headStyles: { fillColor: [79, 70, 229] }, // Matches your Indigo theme
+        styles: { fontSize: 10 },
+      });
+
+      // 7. Download the file
+      doc.save("SmartExpense_Report.pdf");
+
+    } catch (error) {
+      console.error("PDF Generation failed:", error);
+      alert("Could not generate PDF. Check the console for technical details.");
     }
-
-    // 3. Add a Title
-    doc.setFontSize(18);
-    doc.text("SmartExpense - Transaction Report", 14, 22);
-    
-    // 4. Add Generation Date
-    doc.setFontSize(11);
-    doc.setTextColor(100);
-    doc.text(`Report generated on: ${new Date().toLocaleString()}`, 14, 30);
-
-    // 5. Prepare Table Data
-    const tableColumn = ["Date", "Category", "Amount"];
-    const tableRows = transactions.map(t => [
-      t.date || "N/A",
-      t.category || "General",
-      `Rs. ${Math.abs(t.amount || 0).toFixed(2)}`
-    ]);
-
-    // 6. Use autoTable as a direct function (This solves the "not a function" error)
-    autoTable(doc, {
-      startY: 40,
-      head: [tableColumn],
-      body: tableRows,
-      theme: 'grid',
-      headStyles: { fillColor: [79, 70, 229] }, // Matches your Indigo theme
-      styles: { fontSize: 10 },
-    });
-
-    // 7. Download the file
-    doc.save("SmartExpense_Report.pdf");
-
-  } catch (error) {
-    console.error("PDF Generation failed:", error);
-    alert("Could not generate PDF. Check the console for technical details.");
-  }
-};
+  };
   return (
     <>
       <div className="w-full max-w-full px-6 xl:px-12 pt-6 pb-12">
