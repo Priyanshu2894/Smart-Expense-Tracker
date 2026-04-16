@@ -31,12 +31,8 @@ function Dashboard() {
 
   const fetchExpenses = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-      const response = await fetch('http://localhost:5000/api/expenses', {
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/expenses`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -540,7 +536,16 @@ function Dashboard() {
       </div>
 
       <button
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => {
+          const token = localStorage.getItem('token');
+          if (token) {
+            setIsModalOpen(true);
+          } else {
+            // You can use a toast, an alert, or just redirect
+            alert("Please login to add your own transactions!");
+            navigate('/login');
+          }
+        }}
         className="fixed bottom-8 right-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.4)] transition-all hover:scale-110 active:scale-95 z-40"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
@@ -556,61 +561,77 @@ function Dashboard() {
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <h2 className="text-xl font-bold mb-6 text-white">Add Transaction</h2>
-            <form onSubmit={handleAddSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Date</label>
-                <input
-                  type="date"
-                  required
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Category</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Groceries, Rent, Salary"
-                  required
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-gray-600"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Amount (use negative for expenses)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-gray-600"
-                />
-              </div>
-              <div>
-                <label className="flex items-center space-x-3 cursor-pointer mt-4 p-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_recurring}
-                    onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-600 text-indigo-500 focus:ring-indigo-500/50 bg-[#09090b] transition-all"
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-indigo-200">Recurring Monthly Subscription</span>
-                    <span className="text-xs text-indigo-200/50">Automatically charges this to your target balance on the 1st of every month.</span>
+            {localStorage.getItem('token') ? (
+              <>
+                <h2 className="text-xl font-bold mb-6 text-white">Add Transaction</h2>
+                <h2 className="text-xl font-bold mb-6 text-white">Add Transaction</h2>
+                <form onSubmit={handleAddSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                    />
                   </div>
-                </label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">Category</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Groceries, Rent, Salary"
+                      required
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-gray-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">Amount (use negative for expenses)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      value={formData.amount}
+                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                      className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-gray-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="flex items-center space-x-3 cursor-pointer mt-4 p-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_recurring}
+                        onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
+                        className="w-5 h-5 rounded border-gray-600 text-indigo-500 focus:ring-indigo-500/50 bg-[#09090b] transition-all"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-indigo-200">Recurring Monthly Subscription</span>
+                        <span className="text-xs text-indigo-200/50">Automatically charges this to your target balance on the 1st of every month.</span>
+                      </div>
+                    </label>
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl px-4 py-3 mt-6 transition-colors shadow-lg shadow-indigo-500/20"
+                  >
+                    Save Transaction
+                  </button>
+                </form>
+              </>
+            ) : (
+              <div className="text-center py-10">
+                <h2 className="text-xl font-bold mb-4 text-white">Login Required</h2>
+                <p className="mb-6 text-gray-400">You need an account to save transactions and use AI features.</p>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="bg-indigo-600 px-6 py-2 rounded-xl text-white font-bold hover:bg-indigo-500 transition-colors"
+                >
+                  Login / Sign Up
+                </button>
               </div>
-              <button
-                type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl px-4 py-3 mt-6 transition-colors shadow-lg shadow-indigo-500/20"
-              >
-                Save Transaction
-              </button>
-            </form>
+            )}
           </div>
         </div>
       )}
