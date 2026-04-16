@@ -5,7 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import History from './pages/History';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 
 // This component acts as a security wall
 const ProtectedRoute = ({ children }) => {
