@@ -56,7 +56,7 @@ function Dashboard() {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const response = await fetch('http://localhost:5000/api/expenses/process-recurring', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/expenses/process-recurring`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -150,7 +150,7 @@ function Dashboard() {
   const handleDelete = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/expenses/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/expenses/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -175,7 +175,7 @@ function Dashboard() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/expenses', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/expenses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -200,7 +200,7 @@ function Dashboard() {
     setAdvice('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/ai/advice', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/ai/advice`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
