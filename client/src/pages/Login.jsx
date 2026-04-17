@@ -14,7 +14,7 @@ function Login() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -31,10 +31,10 @@ function Login() {
       if (data.user) {
         localStorage.setItem('user', JSON.stringify(data.user));
       }
-      
+
       // Redirect to Dashboard
       navigate('/dashboard');
-      
+
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message);
@@ -48,7 +48,7 @@ function Login() {
       <div className="w-full max-w-md bg-[#18181b] p-8 rounded-2xl border border-white/5 shadow-2xl">
         <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 mb-2">Welcome Back</h2>
         <p className="text-gray-500 mb-8 text-sm">Sign in to your SmartExpense account</p>
-        
+
         {error && (
           <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-3 rounded-lg text-sm mb-6">
             {error}
@@ -58,8 +58,8 @@ function Login() {
         <form className="space-y-4" onSubmit={handleLogin}>
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -69,8 +69,8 @@ function Login() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -78,7 +78,7 @@ function Login() {
               className="w-full bg-[#09090b] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-gray-600"
             />
           </div>
-          <button 
+          <button
             type="submit"
             disabled={isLoading}
             className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl px-4 py-3 mt-4 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -86,7 +86,7 @@ function Login() {
             {isLoading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
-        
+
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-500">
             Don't have an account? <Link to="/signup" className="text-indigo-400 hover:underline">Sign up</Link>

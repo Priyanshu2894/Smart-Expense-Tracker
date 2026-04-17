@@ -541,8 +541,7 @@ function Dashboard() {
           if (token) {
             setIsModalOpen(true);
           } else {
-            // You can use a toast, an alert, or just redirect
-            alert("Please login to add your own transactions!");
+            // No alert, just a smooth transition
             navigate('/login');
           }
         }}
