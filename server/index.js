@@ -18,8 +18,8 @@ app.use(cors({
         if (!origin) return callback(null, true);
 
         const allowedOrigins = [
-            "https://smart-expense-tracker-puce.vercel.app",
-            "http://localhost:5173"
+            "https://smart-expense-tracker-puce.vercel.app"
+            
         ];
 
         // Check if the origin starts with your Vercel URL 
