@@ -121,18 +121,25 @@ function Dashboard() {
   };
 
   const handleDelete = async (id) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/expenses/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        setTransactions(transactions.filter(t => t.id !== id));
-      }
-    } catch (err) {
-      console.error('Failed to delete expense', err);
+  // 1. Confirm with the user before deleting
+  if (!window.confirm("Are you sure you want to delete this transaction?")) return;
+
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/expenses/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      // 2. IMPORTANT: MongoDB uses _id, so we check t._id
+      setTransactions(transactions.filter(t => t._id !== id));
+    } else {
+      console.error('Failed to delete from server');
     }
-  };
+  } catch (err) {
+    console.error('Failed to delete expense', err);
+  }
+};
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
@@ -212,7 +219,7 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Forecast & Allowance - Stacks on Tablet, side-by-side on Desktop */}
+        {/* Forecast & Allowance */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 sm:mb-12">
           <div className={`rounded-2xl border p-6 shadow-xl ${isForecastDangerous ? 'bg-rose-500/5 border-rose-500/20' : 'bg-[#121214] border-white/5'}`}>
             <h2 className="font-bold text-lg text-white mb-2 flex items-center gap-2">
@@ -251,9 +258,9 @@ function Dashboard() {
           {advice && <div className="mt-6 p-4 bg-[#09090b] rounded-xl text-sm text-gray-300 whitespace-pre-wrap">{advice}</div>}
         </div>
 
-        {/* Transactions & Progress - Responsive columns */}
+        {/* Transactions & Progress */}
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 mb-12">
-          {/* Table - Takes 3/5 on large screens */}
+          {/* Recent Transactions Table */}
           <div className="xl:col-span-3 bg-[#121214] rounded-2xl border border-white/5 overflow-hidden">
             <div className="p-4 sm:p-6 border-b border-white/5 flex flex-col sm:flex-row justify-between gap-4">
               <h2 className="font-semibold">Recent Transactions</h2>
@@ -268,23 +275,36 @@ function Dashboard() {
                   <tr>
                     <th className="p-4">Date</th>
                     <th className="p-4">Category</th>
-                    <th className="p-4 text-right">Amount</th>
+                    <th className="p-4">Amount</th>
+                    <th className="p-4 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {transactions.slice(0,10).map(t => (
-                    <tr key={t.id} className="hover:bg-white/5">
+                    <tr key={t._id} className="hover:bg-white/5 transition-colors">
                       <td className="p-4 text-gray-400">{t.date}</td>
                       <td className="p-4 capitalize">{t.category}</td>
-                      <td className={`p-4 text-right font-medium ${t.amount > 0 ? 'text-emerald-400' : 'text-white'}`}>{formatINR(t.amount)}</td>
+                      <td className={`p-4 font-medium ${t.amount > 0 ? 'text-emerald-400' : 'text-white'}`}>{formatINR(t.amount)}</td>
+                      <td className="p-4 text-center">
+                        <button 
+                          onClick={() => handleDelete(t._id)} 
+                          className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+                          title="Delete Transaction"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {transactions.length === 0 && (
+                <div className="p-12 text-center text-gray-500 text-sm">No transactions found. Start by adding one!</div>
+              )}
             </div>
           </div>
 
-          {/* Progress Bars - Takes 2/5 on large screens */}
+          {/* Progress Bars */}
           <div className="xl:col-span-2 bg-[#121214] rounded-2xl border border-white/5 p-6">
             <h2 className="font-semibold mb-6">Spending by Category</h2>
             <div className="space-y-6">
@@ -305,21 +325,34 @@ function Dashboard() {
       </div>
 
       {/* Floating Plus Button */}
-      <button onClick={() => setIsModalOpen(true)} className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 bg-indigo-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg z-40 transition-transform hover:scale-110">
+      <button onClick={() => setIsModalOpen(true)} className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 bg-indigo-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg z-40 transition-transform hover:scale-110 active:scale-95">
         <span className="text-3xl">+</span>
       </button>
 
-      {/* Modals - Simplified for brevity but kept responsive */}
+      {/* Add Transaction Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#18181b] p-6 rounded-2xl w-full max-w-md border border-white/10">
-            <h2 className="text-xl font-bold mb-4">Add Transaction</h2>
+          <div className="bg-[#18181b] p-6 rounded-2xl w-full max-w-md border border-white/10 shadow-2xl">
+            <h2 className="text-xl font-bold mb-4 text-white">Add Transaction</h2>
             <form onSubmit={handleAddSubmit} className="space-y-4">
-              <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full bg-[#09090b] border border-white/10 p-3 rounded-xl text-white" />
-              <input type="text" placeholder="Category" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-[#09090b] border border-white/10 p-3 rounded-xl text-white" />
-              <input type="number" placeholder="Amount" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="w-full bg-[#09090b] border border-white/10 p-3 rounded-xl text-white" />
-              <button type="submit" className="w-full bg-indigo-600 py-3 rounded-xl font-bold">Save</button>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="w-full text-gray-400 text-sm">Cancel</button>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1 uppercase tracking-tight">Date</label>
+                <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full bg-[#09090b] border border-white/10 p-3 rounded-xl text-white focus:border-indigo-500 outline-none" required />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1 uppercase tracking-tight">Category</label>
+                <input type="text" placeholder="e.g. Food, Salary, Rent" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-[#09090b] border border-white/10 p-3 rounded-xl text-white focus:border-indigo-500 outline-none" required />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1 uppercase tracking-tight">Amount</label>
+                <input type="number" placeholder="Use negative for expenses" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="w-full bg-[#09090b] border border-white/10 p-3 rounded-xl text-white focus:border-indigo-500 outline-none" required />
+              </div>
+              <div className="flex items-center gap-2 py-2">
+                <input type="checkbox" id="recurring" checked={formData.is_recurring} onChange={e => setFormData({...formData, is_recurring: e.target.checked})} className="rounded border-white/10 bg-black" />
+                <label htmlFor="recurring" className="text-sm text-gray-400">Recurring Monthly Subscription</label>
+              </div>
+              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-xl font-bold text-white transition-colors">Save Transaction</button>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="w-full text-gray-500 hover:text-white text-sm transition-colors">Cancel</button>
             </form>
           </div>
         </div>
