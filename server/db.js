@@ -10,4 +10,8 @@ const connectDB = async () => {
   }
 };
 
-module.exports = connectDB;
+// Even though Mongoose uses Models, we export a dummy getDb 
+// so your current route structure doesn't crash.
+const getDb = () => mongoose.connection;
+
+module.exports = { connectDB, getDb };
