@@ -92,6 +92,18 @@ function Dashboard() {
     return tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
   });
 
+  const calculateDailyAllowance = () => {
+  const today = new Date();
+  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const daysRemaining = lastDayOfMonth - today.getDate() + 1;
+  
+  const totalBudget = Object.values(categoryBudgets).reduce((a, b) => a + b, 0);
+  const totalSpent = transactions.reduce((acc, curr) => acc + curr.amount, 0);
+  
+  const allowance = (totalBudget + totalSpent) / daysRemaining; // totalSpent is negative, so we add
+  return allowance > 0 ? allowance.toFixed(2) : 0;
+};
+
   const totalSpentThisMonth = currentMonthExpenses.reduce((acc, curr) => acc + Math.abs(parseFloat(curr.amount)), 0);
   const avgDailySpent = currentDay > 0 ? (totalSpentThisMonth / currentDay) : 0;
   const totalForecast = avgDailySpent * daysInMonth;
@@ -200,163 +212,145 @@ function Dashboard() {
 
   return (
     <>
-      <div className="w-full px-4 sm:px-6 lg:px-12 py-6">
-        {/* Summary Cards - Responsive Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
-          <div className="rounded-2xl bg-[#121214] border border-white/5 p-6 shadow-xl">
-            <h2 className="text-gray-400 text-xs font-medium uppercase tracking-wider">Total Balance</h2>
-            <p className={`text-3xl sm:text-4xl font-semibold mt-2 ${totalBalance >= 0 ? 'text-white' : 'text-rose-400'}`}>
-              {formatINR(totalBalance)}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-[#121214] border border-white/5 p-6 shadow-xl">
-            <h2 className="text-gray-400 text-xs font-medium uppercase tracking-wider">Monthly Income</h2>
-            <p className="text-2xl font-semibold text-emerald-400 mt-1">{formatINR(income)}</p>
-          </div>
-          <div className="rounded-2xl bg-[#121214] border border-white/5 p-6 shadow-xl">
-            <h2 className="text-gray-400 text-xs font-medium uppercase tracking-wider">Expenses</h2>
-            <p className="text-2xl font-semibold text-rose-400 mt-1">{formatINR(expenses)}</p>
-          </div>
+      <div className="min-h-screen bg-[#0a0a0a] text-white p-4 pb-24 md:p-8">
+    {/* Header Section */}
+    <div className="flex justify-between items-center mb-8">
+      <div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-gray-400 text-sm">Welcome back, {userProfile.name}</p>
+      </div>
+      <button 
+        onClick={() => setIsModalOpen(true)}
+        className="bg-indigo-600 hover:bg-indigo-700 p-3 rounded-full md:rounded-lg flex items-center gap-2 transition-all shadow-lg"
+      >
+        <span className="hidden md:inline">Add Transaction</span>
+        <span className="md:hidden text-xl">+</span>
+      </button>
+    </div>
+
+    {/* Top Summary Cards */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-gray-800">
+        <p className="text-gray-400 text-xs uppercase font-semibold">Total Balance</p>
+        <h2 className="text-3xl font-bold mt-1">₹{calculateBalance()}</h2>
+      </div>
+      <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-gray-800">
+        <p className="text-green-500 text-xs uppercase font-semibold">Daily Allowance</p>
+        <h2 className="text-3xl font-bold mt-1 text-green-400">₹{calculateDailyAllowance()}</h2>
+      </div>
+      <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-gray-800">
+        <p className="text-red-500 text-xs uppercase font-semibold">Monthly Spending</p>
+        <h2 className="text-3xl font-bold mt-1 text-red-400">₹{Math.abs(calculateMonthlySpending())}</h2>
+      </div>
+    </div>
+
+    {/* Spending Category Section */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="bg-[#1a1a1a] p-6 rounded-2xl border border-gray-800">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold">Spending by Category</h2>
+          
+          {/* BUDGET SETTINGS BUTTON - Placed here for mobile visibility */}
+          <button 
+            onClick={() => setIsBudgetModalOpen(true)}
+            className="p-2 hover:bg-gray-800 rounded-lg border border-gray-700 transition-colors"
+          >
+            <Settings size={20} className="text-indigo-400" />
+          </button>
         </div>
-
-        {/* Forecast & Allowance */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 sm:mb-12">
-          <div className={`rounded-2xl border p-6 shadow-xl ${isForecastDangerous ? 'bg-rose-500/5 border-rose-500/20' : 'bg-[#121214] border-white/5'}`}>
-            <h2 className="font-bold text-lg text-white mb-2 flex items-center gap-2">
-               <Sparkles className="w-5 h-5 text-blue-400" /> Monthly Forecast
-            </h2>
-            <p className="text-sm text-gray-300">
-              On track to spend <span className={`font-bold ${isForecastDangerous ? 'text-rose-400' : 'text-emerald-400'}`}>{formatINR(totalForecast)}</span> by the end of {currentMonthName}.
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-[#121214] border border-white/5 p-6 shadow-xl">
-            <h2 className="font-bold text-lg text-white mb-2 flex items-center gap-2">
-               <Settings className="w-5 h-5 text-indigo-400" /> Daily Allowance
-            </h2>
-            {totalBudgetLimit === 0 ? (
-              <p className="text-gray-400 text-sm">Configure limits to see your daily allowance.</p>
-            ) : (
-              <p className="text-sm text-gray-300">
-                Remaining spend: <span className="font-bold text-emerald-400">{formatINR(dailyAllowance)}</span> per day.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* AI Section */}
-        <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-6 sm:p-8 mb-8 sm:mb-12">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h2 className="font-bold text-xl text-white flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-400"/> AI Advice</h2>
-              <p className="text-gray-400 text-sm">Get spending insights from Gemini AI.</p>
-            </div>
-            <button onClick={generateReport} disabled={isGenerating || transactions.length === 0} className="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-xl font-medium">
-              {isGenerating ? 'Analyzing...' : 'Generate Advice'}
-            </button>
-          </div>
-          {advice && <div className="mt-6 p-4 bg-[#09090b] rounded-xl text-sm text-gray-300 whitespace-pre-wrap">{advice}</div>}
-        </div>
-
-        {/* Transactions & Progress */}
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 mb-12">
-          {/* Recent Transactions Table */}
-          <div className="xl:col-span-3 bg-[#121214] rounded-2xl border border-white/5 overflow-hidden">
-            <div className="p-4 sm:p-6 border-b border-white/5 flex flex-col sm:flex-row justify-between gap-4">
-              <h2 className="font-semibold">Recent Transactions</h2>
-              <div className="flex gap-2">
-                 <input type="text" placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm focus:outline-none w-full" />
-                 <button onClick={handleDownloadReport} className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg"><Download className="w-4 h-4"/></button>
+        
+        <div className="space-y-4">
+          {Object.entries(calculateCategorySpending()).map(([category, amount]) => (
+            <div key={category} className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">{category}</span>
+                <span className="font-medium">₹{Math.abs(amount).toFixed(2)}</span>
+              </div>
+              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-indigo-500 rounded-full" 
+                  style={{ width: `${Math.min((Math.abs(amount) / (categoryBudgets[category] || 5000)) * 100, 100)}%` }}
+                />
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-white/5 text-gray-400 text-xs uppercase">
-                  <tr>
-                    <th className="p-4">Date</th>
-                    <th className="p-4">Category</th>
-                    <th className="p-4">Amount</th>
-                    <th className="p-4 text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {transactions.slice(0,10).map(t => (
-                    <tr key={t._id} className="hover:bg-white/5 transition-colors">
-                      <td className="p-4 text-gray-400">{t.date}</td>
-                      <td className="p-4 capitalize">{t.category}</td>
-                      <td className={`p-4 font-medium ${t.amount > 0 ? 'text-emerald-400' : 'text-white'}`}>{formatINR(t.amount)}</td>
-                      <td className="p-4 text-center">
-                        <button 
-                          onClick={() => handleDelete(t._id)} 
-                          className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
-                          title="Delete Transaction"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {transactions.length === 0 && (
-                <div className="p-12 text-center text-gray-500 text-sm">No transactions found. Start by adding one!</div>
-              )}
-            </div>
-          </div>
-
-          {/* Progress Bars */}
-          <div className="xl:col-span-2 bg-[#121214] rounded-2xl border border-white/5 p-6">
-            <h2 className="font-semibold mb-6">Spending by Category</h2>
-            <div className="space-y-6">
-              {pieChartData.map((entry, index) => (
-                <div key={index}>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="capitalize text-gray-300">{entry.name}</span>
-                    <span className="font-bold">{formatINR(entry.value)}</span>
-                  </div>
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${Math.min((entry.value / expenses) * 100, 100)}%`, backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Floating Plus Button */}
-      <button onClick={() => setIsModalOpen(true)} className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 bg-indigo-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg z-40 transition-transform hover:scale-110 active:scale-95">
-        <span className="text-3xl">+</span>
-      </button>
-
-      {/* Add Transaction Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#18181b] p-6 rounded-2xl w-full max-w-md border border-white/10 shadow-2xl">
-            <h2 className="text-xl font-bold mb-4 text-white">Add Transaction</h2>
-            <form onSubmit={handleAddSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs text-gray-400 mb-1 uppercase tracking-tight">Date</label>
-                <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full bg-[#09090b] border border-white/10 p-3 rounded-xl text-white focus:border-indigo-500 outline-none" required />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1 uppercase tracking-tight">Category</label>
-                <input type="text" placeholder="e.g. Food, Salary, Rent" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-[#09090b] border border-white/10 p-3 rounded-xl text-white focus:border-indigo-500 outline-none" required />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1 uppercase tracking-tight">Amount</label>
-                <input type="number" placeholder="Use negative for expenses" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="w-full bg-[#09090b] border border-white/10 p-3 rounded-xl text-white focus:border-indigo-500 outline-none" required />
-              </div>
-              <div className="flex items-center gap-2 py-2">
-                <input type="checkbox" id="recurring" checked={formData.is_recurring} onChange={e => setFormData({...formData, is_recurring: e.target.checked})} className="rounded border-white/10 bg-black" />
-                <label htmlFor="recurring" className="text-sm text-gray-400">Recurring Monthly Subscription</label>
-              </div>
-              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-xl font-bold text-white transition-colors">Save Transaction</button>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="w-full text-gray-500 hover:text-white text-sm transition-colors">Cancel</button>
-            </form>
-          </div>
+      {/* AI Advice Card */}
+      <div className="bg-indigo-900/20 p-6 rounded-2xl border border-indigo-500/30">
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="text-indigo-400" size={20} />
+          <h2 className="text-xl font-bold">AI Savings Advice</h2>
         </div>
-      )}
+        <p className="text-gray-300 text-sm mb-6">
+          {advice || "Click generate to get personalized savings tips."}
+        </p>
+        <button 
+          onClick={generateReport}
+          disabled={isGenerating}
+          className="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+        >
+          {isGenerating ? "Analyzing..." : "Generate Advice"}
+        </button>
+      </div>
+    </div>
+
+    {/* Recent Transactions Table */}
+    <div className="bg-[#1a1a1a] rounded-2xl border border-gray-800 overflow-hidden">
+      <div className="p-6 border-b border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h2 className="text-xl font-bold">Recent Transactions</h2>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+          <input 
+            type="text"
+            placeholder="Search expenses..."
+            className="bg-[#0a0a0a] border border-gray-700 rounded-lg pl-10 pr-4 py-2 text-sm w-full md:w-64 focus:outline-none focus:border-indigo-500"
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+      
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="bg-[#141414] text-gray-400 text-xs uppercase">
+            <tr>
+              <th className="px-6 py-4">Date</th>
+              <th className="px-6 py-4">Category</th>
+              <th className="px-6 py-4 text-right">Amount</th>
+              <th className="px-6 py-4 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-800">
+            {transactions
+              .filter(t => t.category.toLowerCase().includes(searchQuery.toLowerCase()))
+              .map((transaction) => (
+              <tr key={transaction._id || transaction.id} className="hover:bg-[#141414] transition-colors">
+                <td className="px-6 py-4 text-sm text-gray-300">{transaction.date}</td>
+                <td className="px-6 py-4">
+                  <span className="bg-gray-800 px-3 py-1 rounded-full text-xs text-indigo-300">
+                    {transaction.category}
+                  </span>
+                </td>
+                <td className={`px-6 py-4 text-sm font-bold text-right ${transaction.amount < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                  ₹{Math.abs(transaction.amount).toFixed(2)}
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <button 
+                    onClick={() => handleDelete(transaction._id || transaction.id)}
+                    className="text-gray-500 hover:text-red-400 transition-colors"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
     </>
   );
 }
