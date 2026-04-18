@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const connectDB = require('./db'); // Our new MongoDB connection
+const { connectDB } = require('./db'); // Our new MongoDB connection
 
 console.log("Gemini Key:", process.env.GEMINI_API_KEY ? "Loaded" : "Not Loaded");
 
