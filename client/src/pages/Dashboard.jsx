@@ -104,6 +104,33 @@ function Dashboard() {
   return allowance > 0 ? allowance.toFixed(2) : 0;
 };
 
+const calculateBalance = () => {
+    return transactions.reduce((acc, curr) => acc + curr.amount, 0).toFixed(2);
+  };
+
+  // 2. Calculates total spending for the current month
+  const calculateMonthlySpending = () => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    
+    return transactions
+      .filter(t => {
+        const d = new Date(t.date);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear && t.amount < 0;
+      })
+      .reduce((acc, curr) => acc + curr.amount, 0).toFixed(2);
+  };
+
+  // 3. Groups spending by category for the progress bars
+  const calculateCategorySpending = () => {
+    return transactions
+      .filter(t => t.amount < 0) // only count expenses
+      .reduce((acc, curr) => {
+        acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+        return acc;
+      }, {});
+  };
+
   const totalSpentThisMonth = currentMonthExpenses.reduce((acc, curr) => acc + Math.abs(parseFloat(curr.amount)), 0);
   const avgDailySpent = currentDay > 0 ? (totalSpentThisMonth / currentDay) : 0;
   const totalForecast = avgDailySpent * daysInMonth;
