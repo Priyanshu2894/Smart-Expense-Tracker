@@ -57,7 +57,7 @@ function Dashboard() {
     fetchExpenses();
   }, [fetchExpenses]);
 
-  // Calculations
+  // --- Calculations ---
   const totalBalance = transactions.reduce((acc, curr) => acc + parseFloat(curr.amount || 0), 0);
   const income = transactions.filter(t => parseFloat(t.amount) > 0).reduce((acc, curr) => acc + parseFloat(curr.amount), 0);
   const expenses = transactions.filter(t => parseFloat(t.amount) < 0).reduce((acc, curr) => acc + Math.abs(parseFloat(curr.amount)), 0);
@@ -84,6 +84,17 @@ function Dashboard() {
   const isForecastDangerous = totalBudgetLimit > 0 && totalForecast > totalBudgetLimit;
   const dailyAllowance = totalBudgetLimit > 0 ? ((totalBudgetLimit - totalSpentThisMonth) / daysRemaining) : 0;
   const currentMonthName = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][currentMonth];
+
+  const uniqueExpenseCategories = Array.from(new Set(
+    transactions.filter(t => parseFloat(t.amount) < 0).map(t => t.category.toLowerCase())
+  ));
+
+  const handleBudgetChange = (category, value) => {
+    setCategoryBudgets(prev => ({
+      ...prev,
+      [category.toLowerCase()]: parseFloat(value) || 0
+    }));
+  };
 
   const expenseDataMap = currentMonthExpenses.reduce((acc, curr) => {
     const cat = curr.category.toLowerCase();
@@ -269,7 +280,6 @@ function Dashboard() {
           <div className="xl:col-span-2 bg-[#121214] rounded-2xl border border-white/5 p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="font-semibold">Spending by Category</h2>
-              {/* SETTINGS BUTTON BACK IN CATEGORY BOX */}
               <button onClick={() => setIsBudgetModalOpen(true)} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
                 <Settings className="w-4 h-4 text-indigo-400" />
               </button>
@@ -308,6 +318,46 @@ function Dashboard() {
               <button type="submit" className="w-full bg-indigo-600 py-3 rounded-xl font-bold text-white hover:bg-indigo-700">Save</button>
               <button type="button" onClick={() => setIsModalOpen(false)} className="w-full text-gray-400 text-sm hover:text-white">Cancel</button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Budget Configuration Modal */}
+      {isBudgetModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#18181b] p-6 rounded-2xl w-full max-w-md border border-white/10 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Settings className="w-5 h-5 text-indigo-400" /> Set Monthly Budgets
+              </h2>
+              <button onClick={() => setIsBudgetModalOpen(false)} className="text-gray-400 hover:text-white">✕</button>
+            </div>
+            
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              {uniqueExpenseCategories.length > 0 ? (
+                uniqueExpenseCategories.map(cat => (
+                  <div key={cat} className="space-y-2">
+                    <label className="text-xs text-gray-400 uppercase font-semibold">{cat}</label>
+                    <input
+                      type="number"
+                      placeholder="Enter budget (e.g. 5000)"
+                      value={categoryBudgets[cat] || ''}
+                      onChange={(e) => handleBudgetChange(cat, e.target.value)}
+                      className="w-full bg-[#09090b] border border-white/10 p-3 rounded-xl text-white focus:border-indigo-600 outline-none transition-all"
+                    />
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm text-center py-4">Add some expenses first to set category budgets!</p>
+              )}
+            </div>
+
+            <button 
+              onClick={() => setIsBudgetModalOpen(false)} 
+              className="w-full bg-indigo-600 mt-6 py-3 rounded-xl font-bold text-white hover:bg-indigo-700 transition-all"
+            >
+              Save & Close
+            </button>
           </div>
         </div>
       )}
